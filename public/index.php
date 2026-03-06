@@ -9,6 +9,8 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 use App\Core\Container;
 use App\Core\Database;
 use App\Core\Router;
+use App\Models\PracticeModel;
+use App\Models\SubmissionModel;
 use App\Models\UserModel;
 
 $container = new Container();
@@ -25,6 +27,14 @@ $container->set(Database::class, static function (Container $container): Databas
 
 $container->set(UserModel::class, static function (Container $container): UserModel {
     return new UserModel($container->get(Database::class));
+});
+
+$container->set(PracticeModel::class, static function (Container $container): PracticeModel {
+    return new PracticeModel($container->get(Database::class));
+});
+
+$container->set(SubmissionModel::class, static function (Container $container): SubmissionModel {
+    return new SubmissionModel($container->get(Database::class));
 });
 
 $routes = require __DIR__ . '/../config/routes.php';

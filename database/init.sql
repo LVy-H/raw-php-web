@@ -1,4 +1,6 @@
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS submissions;
+DROP TABLE IF EXISTS practices;
 
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -8,6 +10,29 @@ CREATE TABLE users (
     username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role VARCHAR(32) NOT NULL DEFAULT 'student' CHECK(role IN ('teacher', 'student'))
+);
+
+CREATE TABLE practices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    file_name VARCHAR(255) NOT NULL,
+    stored_name VARCHAR(255) NOT NULL UNIQUE,
+    uploaded_by INTEGER NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id)
+);
+
+CREATE TABLE submissions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    practice_id INTEGER NOT NULL,
+    student_id INTEGER NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    stored_name VARCHAR(255) NOT NULL UNIQUE,
+    submitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (practice_id) REFERENCES practices(id),
+    FOREIGN KEY (student_id) REFERENCES users(id),
+    UNIQUE(practice_id, student_id)
 );
 
 INSERT INTO users (name, email, phone, username, password, role) VALUES

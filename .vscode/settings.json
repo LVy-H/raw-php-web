@@ -1,3 +1,11 @@
 {
-    "sqltools.useNodeRuntime": true
+    "sqltools.useNodeRuntime": true,
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "\\\\wsl.localhost\\Ubuntu\\home\\vh\\VCSProg\\prog5\\storage\\database.sqlite",
+            "name": "sqlite"
+        }
+    ]
 }
