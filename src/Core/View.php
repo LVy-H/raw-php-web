@@ -9,6 +9,8 @@ class View {
         $shared = [
             'authUserId' => $_SESSION['user_id'] ?? null,
             'authUsername' => $_SESSION['username'] ?? null,
+            'authName' => $_SESSION['user_name'] ?? null,
+            'authRole' => $_SESSION['user_role'] ?? null,
         ];
 
         $payload = array_merge($shared, $data);

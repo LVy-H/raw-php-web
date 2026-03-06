@@ -7,7 +7,7 @@ $username = (string) (($form['username'] ?? ''));
 <section class="stack">
     <div class="card" style="max-width: 520px;">
         <h1 class="title" style="font-size: 28px;">Sign in</h1>
-        <p class="subtitle">Enter your class account to access shared member documents.</p>
+        <p class="subtitle">Use your teacher or student account to access the class workspace.</p>
 
         <?php if (!empty($error)): ?>
             <div class="alert"><?= View::escape((string) $error) ?></div>
