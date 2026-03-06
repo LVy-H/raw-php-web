@@ -1,3 +1,10 @@
 .env
+.env.*
 storage/
 vendor/
+
+*.sqlite
+*.sqlite3
+*.db
+*.sql.gz
+*.sql.zip
