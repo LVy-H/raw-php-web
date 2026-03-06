@@ -6,6 +6,23 @@ use PDO;
 
 class UserModel extends BaseModel
 {
+    public function allPublic(): array
+    {
+        $stmt = $this->db->query(
+            "SELECT id, name, email, phone, username, role FROM users ORDER BY id DESC"
+        );
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function findPublicById(int $id): ?array
+    {
+        $stmt = $this->db->query(
+            "SELECT id, name, email, phone, username, role FROM users WHERE id = :id",
+            ['id' => $id]
+        );
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
     public function findByUsername(string $username): ?array
     {
         $stmt = $this->db->query("SELECT * FROM users WHERE username = :username", ['username' => $username]);
@@ -120,5 +137,27 @@ class UserModel extends BaseModel
     public function deleteStudent(int $id): void
     {
         $this->db->query("DELETE FROM users WHERE id = :id AND role = 'student'", ['id' => $id]);
+    }
+
+    public function updateStudentSelf(int $id, array $data): void
+    {
+        $sql = 'UPDATE users
+                SET email = :email,
+                    phone = :phone';
+
+        $params = [
+            'id' => $id,
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+        ];
+
+        if (!empty($data['password'])) {
+            $sql .= ', password = :password';
+            $params['password'] = $data['password'];
+        }
+
+        $sql .= " WHERE id = :id AND role = 'student'";
+
+        $this->db->query($sql, $params);
     }
 }

@@ -12,35 +12,35 @@ return [
         '/' => [HomeController::class, 'index'],
         '/ping' => [PongController::class, 'index'],
         '/login' => [LoginController::class, 'index'],
-        '/students' => [
+        '/users' => [
             'handler' => [UsersController::class, 'index'],
-            'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
+            'middleware' => [AuthMiddleware::class],
         ],
-        '/students/create' => [
+        '/users/create' => [
             'handler' => [UsersController::class, 'create'],
             'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
         ],
-        '/students/{id}' => [
+        '/users/{id}' => [
             'handler' => [UsersController::class, 'show'],
-            'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
+            'middleware' => [AuthMiddleware::class],
         ],
-        '/students/{id}/edit' => [
+        '/users/{id}/edit' => [
             'handler' => [UsersController::class, 'edit'],
-            'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
+            'middleware' => [AuthMiddleware::class],
         ],
     ],
     'POST' => [
         '/login' => [LoginController::class, 'login'],
         '/logout' => [LoginController::class, 'logout'],
-        '/students' => [
+        '/users' => [
             'handler' => [UsersController::class, 'store'],
             'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
         ],
-        '/students/{id}/update' => [
+        '/users/{id}/update' => [
             'handler' => [UsersController::class, 'update'],
-            'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
+            'middleware' => [AuthMiddleware::class],
         ],
-        '/students/{id}/delete' => [
+        '/users/{id}/delete' => [
             'handler' => [UsersController::class, 'delete'],
             'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
         ],

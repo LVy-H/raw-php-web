@@ -13,7 +13,7 @@ class LoginController {
     public function index(): string
     {
         if (isset($_SESSION['user_id'])) {
-            header('Location: /students');
+            header('Location: /users');
             return '';
         }
 
@@ -43,7 +43,7 @@ class LoginController {
         $_SESSION['user_name'] = (string) ($user['name'] ?? $user['username']);
         $_SESSION['user_role'] = (string) ($user['role'] ?? 'student');
 
-        header('Location: /students');
+        header('Location: /users');
         return '';
     }
 

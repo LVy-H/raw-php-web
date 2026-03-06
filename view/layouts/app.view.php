@@ -220,10 +220,8 @@ $pageTitle = isset($title) ? (string) $title : 'Class Document Manager';
         <div class="brand">Class Document Manager</div>
         <nav class="menu">
             <a class="pill" href="/">Dashboard</a>
+            <a class="pill" href="/users">Users</a>
             <?php if ($authUserId !== null): ?>
-                <?php if ($authRole === 'teacher'): ?>
-                    <a class="pill" href="/students">Students</a>
-                <?php endif; ?>
                 <span class="muted"><?= View::escape($authName ?? $authUsername ?? 'user') ?> (<?= View::escape((string) ($authRole ?? 'user')) ?>)</span>
                 <form action="/logout" method="post" style="margin:0;">
                     <button class="btn" type="submit">Sign out</button>
