@@ -160,12 +160,17 @@ class GameController
 
     private function gamesRoot(): string
     {
-        return dirname(__DIR__, 2) . '/storage/uploads/games';
+        return $this->uploadsRoot() . '/games';
     }
 
     private function gamesMetaRoot(): string
     {
-        return dirname(__DIR__, 2) . '/storage/uploads/games-meta';
+        return $this->uploadsRoot() . '/games-meta';
+    }
+
+    private function uploadsRoot(): string
+    {
+        return dirname(__DIR__, 2) . '/storage/uploads';
     }
 
     private function resolveRewardFile(string $gameId): ?array

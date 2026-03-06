@@ -54,6 +54,7 @@ $authId = (int) ($authUserId ?? 0);
                             <a class="link" href="/users/<?= View::escape((string) $memberId) ?>/edit">Edit</a>
                             &nbsp;·&nbsp;
                             <form action="/users/<?= View::escape((string) $memberId) ?>/delete" method="post" style="display:inline;margin:0;">
+                                <?= \App\Core\Csrf::field() ?>
                                 <button type="submit" class="link" style="background:none;border:none;padding:0;cursor:pointer;">Delete</button>
                             </form>
                         <?php elseif ($canSelfEdit): ?>

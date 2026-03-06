@@ -18,6 +18,7 @@ $formData = $form ?? ['title' => '', 'description' => ''];
         <?php endif; ?>
 
         <form class="form" action="/practices" method="post" enctype="multipart/form-data" style="max-width:none;">
+            <?= \App\Core\Csrf::field() ?>
             <label>
                 <span class="muted">Title</span>
                 <input class="input" type="text" name="title" value="<?= View::escape((string) ($formData['title'] ?? '')) ?>" required>

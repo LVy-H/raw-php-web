@@ -27,6 +27,7 @@ $rewardData = $reward ?? null;
         <div class="card">
             <h2 style="margin-top:0;">Create Game</h2>
             <form class="form" action="/games" method="post" enctype="multipart/form-data" style="max-width:none;">
+                <?= \App\Core\Csrf::field() ?>
                 <label>
                     <span class="muted">Hint</span>
                     <input class="input" type="text" name="hint" required>
@@ -50,6 +51,7 @@ $rewardData = $reward ?? null;
                     <p class="subtitle">Answer filename: <?= View::escape((string) ($game['answer_filename'] ?? '')) ?></p>
                 <?php elseif ($isStudent): ?>
                     <form class="form" action="/games/<?= View::escape($id) ?>/guess" method="post" style="max-width:none;margin-top:8px;">
+                        <?= \App\Core\Csrf::field() ?>
                         <label>
                             <span class="muted">Your guess (filename with extension)</span>
                             <input class="input" type="text" name="guess" placeholder="example.txt" required>

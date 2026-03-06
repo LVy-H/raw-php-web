@@ -27,6 +27,7 @@ $action = $isEdit
         <?php endif; ?>
 
         <form class="form" action="<?= $action ?>" method="post" style="max-width:none;">
+            <?= \App\Core\Csrf::field() ?>
             <label>
                 <span class="muted">Full name</span>
                 <input class="input" type="text" name="name" value="<?= View::escape((string) ($form['name'] ?? '')) ?>" <?= $isSelfEdit ? 'readonly' : 'required' ?>>

@@ -24,6 +24,7 @@ $pageTitle = isset($title) ? (string) $title : 'Class Document Manager';
             <?php if ($authUserId !== null): ?>
                 <span class="muted"><?= View::escape($authName ?? $authUsername ?? 'user') ?> (<?= View::escape((string) ($authRole ?? 'user')) ?>)</span>
                 <form action="/logout" method="post" style="margin:0;">
+                    <?= \App\Core\Csrf::field() ?>
                     <button class="btn" type="submit">Sign out</button>
                 </form>
             <?php else: ?>

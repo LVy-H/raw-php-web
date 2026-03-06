@@ -2,13 +2,11 @@
 
 namespace App\Models;
 
-use PDO;
-
 class SubmissionModel extends BaseModel
 {
     public function findByPracticeAndStudent(int $practiceId, int $studentId): ?array
     {
-        $stmt = $this->db->query(
+        return $this->db->query(
             'SELECT id, practice_id, student_id, file_name, stored_name, submitted_at
              FROM submissions
              WHERE practice_id = :practice_id AND student_id = :student_id',
@@ -16,21 +14,17 @@ class SubmissionModel extends BaseModel
                 'practice_id' => $practiceId,
                 'student_id' => $studentId,
             ]
-        );
-
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        )->fetch() ?: null;
     }
 
     public function findById(int $id): ?array
     {
-        $stmt = $this->db->query(
+        return $this->db->query(
             'SELECT id, practice_id, student_id, file_name, stored_name, submitted_at
              FROM submissions
              WHERE id = :id',
             ['id' => $id]
-        );
-
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        )->fetch() ?: null;
     }
 
     public function upsert(int $practiceId, int $studentId, string $fileName, string $storedName): void
@@ -54,7 +48,7 @@ class SubmissionModel extends BaseModel
 
     public function forPractice(int $practiceId): array
     {
-        $stmt = $this->db->query(
+        return $this->db->query(
             'SELECT s.id, s.file_name, s.submitted_at,
                     u.id AS student_id, u.name AS student_name, u.username AS student_username
              FROM submissions s
@@ -62,20 +56,16 @@ class SubmissionModel extends BaseModel
              WHERE s.practice_id = :practice_id
              ORDER BY s.submitted_at DESC',
             ['practice_id' => $practiceId]
-        );
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        )->fetchAll();
     }
 
     public function forStudent(int $studentId): array
     {
-        $stmt = $this->db->query(
+        return $this->db->query(
             'SELECT id, practice_id, file_name, submitted_at
              FROM submissions
              WHERE student_id = :student_id',
             ['student_id' => $studentId]
-        );
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        )->fetchAll();
     }
 }

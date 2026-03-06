@@ -14,6 +14,7 @@ $username = (string) (($form['username'] ?? ''));
         <?php endif; ?>
 
         <form class="form" action="/login" method="post">
+            <?= \App\Core\Csrf::field() ?>
             <label>
                 <span class="muted">Username</span>
                 <input class="input" type="text" name="username" value="<?= View::escape($username) ?>" autocomplete="username" required>

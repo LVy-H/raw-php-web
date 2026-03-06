@@ -31,6 +31,7 @@ $authId = (int) ($authUserId ?? 0);
                 <?php if ($canTeacherManage): ?>
                     <a class="pill" href="/users/<?= View::escape((string) $memberId) ?>/edit">Edit student</a>
                     <form action="/users/<?= View::escape((string) $memberId) ?>/delete" method="post" style="display:inline;margin:0 0 0 6px;">
+                        <?= \App\Core\Csrf::field() ?>
                         <button type="submit" class="pill" style="cursor:pointer;">Delete student</button>
                     </form>
                 <?php elseif ($canSelfEdit): ?>
@@ -57,6 +58,7 @@ $authId = (int) ($authUserId ?? 0);
             <?php endif; ?>
 
             <form class="form" action="/users/<?= View::escape((string) $memberId) ?>/notes" method="post" style="max-width:none;margin-top:12px;">
+                <?= \App\Core\Csrf::field() ?>
                 <label>
                     <span class="muted">Leave a note for this profile</span>
                     <textarea class="input" name="content" rows="3" style="resize:vertical;" required></textarea>
@@ -80,6 +82,7 @@ $authId = (int) ($authUserId ?? 0);
 
                     <?php if ($isWriter): ?>
                         <form class="form" action="/notes/<?= View::escape((string) $noteId) ?>/update" method="post" style="max-width:none;margin-top:8px;">
+                            <?= \App\Core\Csrf::field() ?>
                             <textarea class="input" name="content" rows="3" style="resize:vertical;" required><?= View::escape((string) ($note['content'] ?? '')) ?></textarea>
                             <div style="display:flex;gap:8px;">
                                 <button class="btn" type="submit">Update</button>

@@ -14,7 +14,7 @@ final class Container
         $this->factories[$name] = $factory;
     }
 
-    public function get(string $name)
+    public function get(string $name): mixed
     {
         if (array_key_exists($name, $this->instances)) {
             return $this->instances[$name];

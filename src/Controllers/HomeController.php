@@ -2,18 +2,15 @@
 
 namespace App\Controllers;
 
-use App\Core\View;
-
-class HomeController {
+class HomeController
+{
     public function index(): string
     {
-        if (isset($_SESSION['user_id'])) {
-        header('Location: /users/' . ($_SESSION['user_id'] ?? ''));
+        $destination = isset($_SESSION['user_id'])
+            ? '/users/' . (int) $_SESSION['user_id']
+            : '/login';
+
+        header('Location: ' . $destination);
         return '';
-        }
-        else {
-            header('Location: /login');
-            return '';
-        }
     }
 }

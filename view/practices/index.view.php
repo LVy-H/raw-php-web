@@ -58,6 +58,7 @@ $submissionMap = $studentSubmissions ?? [];
                             <a class="link" href="/practices/<?= View::escape((string) $practiceId) ?>/submissions">View submissions</a>
                         <?php elseif ($isStudent): ?>
                             <form action="/practices/<?= View::escape((string) $practiceId) ?>/submit" method="post" enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                <?= \App\Core\Csrf::field() ?>
                                 <input class="input" type="file" name="submission_file" required style="max-width:180px;padding:6px;">
                                 <button class="btn" type="submit">Submit</button>
                                 <?php if (isset($submissionMap[$practiceId])): ?>

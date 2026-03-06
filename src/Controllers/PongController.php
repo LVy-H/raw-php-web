@@ -2,8 +2,10 @@
 
 namespace App\Controllers;
 
-class PongController {
-    function index() {
-        echo "pong";
+class PongController
+{
+    public function index(): string
+    {
+        return 'pong';
     }
 }

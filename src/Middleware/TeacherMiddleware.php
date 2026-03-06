@@ -10,8 +10,7 @@ class TeacherMiddleware implements MiddlewareInterface
     {
         if (($_SESSION['user_role'] ?? null) !== 'teacher') {
             http_response_code(403);
-            echo 'Forbidden: teacher access required.';
-            return null;
+            return 'Forbidden: teacher access required.';
         }
 
         return $next($params);

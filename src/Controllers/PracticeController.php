@@ -231,9 +231,11 @@ class PracticeController
             return 'File not found.';
         }
 
+        $safeName = basename($downloadName);
+
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . basename($downloadName) . '"');
+        header('Content-Disposition: attachment; filename="' . str_replace(['"', '\\'], '_', $safeName) . '"; filename*=UTF-8\'\'' . rawurlencode($safeName));
         header('Content-Length: ' . (string) filesize($path));
 
         readfile($path);

@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use PDO;
-
 class PracticeModel extends BaseModel
 {
     public function allWithUploader(): array
@@ -16,7 +14,7 @@ class PracticeModel extends BaseModel
              ORDER BY p.id DESC'
         );
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll();
     }
 
     public function findById(int $id): ?array
@@ -30,7 +28,7 @@ class PracticeModel extends BaseModel
             ['id' => $id]
         );
 
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        return $stmt->fetch() ?: null;
     }
 
     public function create(array $data): void

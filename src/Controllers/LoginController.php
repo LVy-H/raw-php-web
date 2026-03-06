@@ -43,16 +43,18 @@ class LoginController {
         $_SESSION['user_name'] = (string) ($user['name'] ?? $user['username']);
         $_SESSION['user_role'] = (string) ($user['role'] ?? 'student');
 
+        session_regenerate_id(true);
+
         header('Location: /users');
         return '';
     }
 
     public function logout(): string
     {
-        unset($_SESSION['user_id']);
-        unset($_SESSION['username']);
-        unset($_SESSION['user_name']);
-        unset($_SESSION['user_role']);
+        $_SESSION = [];
+        session_destroy();
+        session_start();
+        session_regenerate_id(true);
 
         header('Location: /login');
         return '';
