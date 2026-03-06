@@ -23,5 +23,6 @@ return [
     ],
     'POST' => [
         '/login' => [LoginController::class, 'login'],
+        '/logout' => [LoginController::class, 'logout'],
     ],
 ];

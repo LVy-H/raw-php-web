@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\View;
 use App\Models\UserModel;
 
 class UsersController
@@ -12,7 +13,10 @@ class UsersController
 
     public function index(): string
     {
-        return json_encode($this->users->all(), JSON_PRETTY_PRINT) ?: '[]';
+        return View::make('users/index', [
+            'title' => 'Class Members',
+            'users' => $this->users->all(),
+        ]);
     }
 
     public function show(string $id): string
@@ -21,9 +25,19 @@ class UsersController
 
         if ($user === null) {
             http_response_code(404);
-            return json_encode(['message' => 'User not found']) ?: '{"message":"User not found"}';
+            return View::make('users/show', [
+                'title' => 'Member Not Found',
+                'user' => null,
+            ]);
         }
 
-        return json_encode($user, JSON_PRETTY_PRINT) ?: '{}';
+        return View::make('users/show', [
+            'title' => 'Member Profile',
+            'user' => $user,
+            'documents' => [
+                ['name' => 'Syllabus Notes', 'updated_at' => '2026-03-02'],
+                ['name' => 'Project Milestone', 'updated_at' => '2026-03-04'],
+            ],
+        ]);
     }
 }

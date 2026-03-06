@@ -1,0 +1,242 @@
+<?php
+
+use App\Core\View;
+
+$pageTitle = isset($title) ? (string) $title : 'Class Document Manager';
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= View::escape($pageTitle) ?> · Class Document Manager</title>
+    <style>
+        :root {
+            --bg: #f6f7f9;
+            --surface: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --accent: #111827;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .container {
+            width: min(980px, 92vw);
+            margin: 0 auto;
+        }
+
+        .nav {
+            position: sticky;
+            top: 0;
+            backdrop-filter: blur(8px);
+            background: rgba(246, 247, 249, 0.85);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 64px;
+            gap: 16px;
+        }
+
+        .brand {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+
+        .menu {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .pill,
+        .btn {
+            border: 1px solid var(--line);
+            background: var(--surface);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 140ms ease;
+        }
+
+        .btn {
+            cursor: pointer;
+        }
+
+        .pill:hover,
+        .btn:hover {
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        main {
+            padding: 28px 0 40px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 22px;
+        }
+
+        .muted { color: var(--muted); }
+
+        .title {
+            margin: 0;
+            font-size: clamp(22px, 3vw, 30px);
+            letter-spacing: -0.4px;
+        }
+
+        .subtitle {
+            margin-top: 8px;
+            margin-bottom: 0;
+            color: var(--muted);
+        }
+
+        .stack { display: grid; gap: 16px; }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .stat {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .stat h3 {
+            margin: 0;
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .stat p {
+            margin: 10px 0 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 11px 8px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .link {
+            color: var(--text);
+            text-decoration: none;
+            border-bottom: 1px solid #cfd4dc;
+        }
+
+        .link:hover {
+            border-bottom-color: var(--text);
+        }
+
+        .form {
+            display: grid;
+            gap: 12px;
+            max-width: 420px;
+        }
+
+        .input {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+            background: #fff;
+            color: var(--text);
+            transition: border-color 120ms ease;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: #9ca3af;
+        }
+
+        .alert {
+            border: 1px solid #fecaca;
+            background: #fef2f2;
+            color: #991b1b;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 760px) {
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-inner {
+                flex-wrap: wrap;
+                padding: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<header class="nav">
+    <div class="container nav-inner">
+        <div class="brand">Class Document Manager</div>
+        <nav class="menu">
+            <a class="pill" href="/">Dashboard</a>
+            <?php if ($authUserId !== null): ?>
+                <a class="pill" href="/users">Members</a>
+                <span class="muted">@<?= View::escape($authUsername ?? 'user') ?></span>
+                <form action="/logout" method="post" style="margin:0;">
+                    <button class="btn" type="submit">Sign out</button>
+                </form>
+            <?php else: ?>
+                <a class="btn btn-primary" href="/login">Sign in</a>
+            <?php endif; ?>
+        </nav>
+    </div>
+</header>
+
+<main>
+    <div class="container">
+        <?= $content ?>
+    </div>
+</main>
+</body>
+</html>

@@ -6,6 +6,12 @@ use PDO;
 
 class UserModel extends BaseModel
 {
+    public function findByUsername(string $username): ?array
+    {
+        $stmt = $this->db->query("SELECT * FROM users WHERE username = :username", ['username' => $username]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
     public function findById(int $id): ?array
     {
         $stmt = $this->db->query("SELECT * FROM users WHERE id = :id", ['id' => $id]);

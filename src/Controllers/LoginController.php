@@ -2,29 +2,55 @@
 
 namespace App\Controllers;
 
+use App\Core\View;
+use App\Models\UserModel;
+
 class LoginController {
+    public function __construct(private UserModel $users)
+    {
+    }
+
     public function index(): string
     {
-        return json_encode([
-            'message' => 'Send POST /login to authenticate and GET /logout to sign out'
-        ]) ?: '{"message":"Send POST /login to authenticate and GET /logout to sign out"}';
+        if (isset($_SESSION['user_id'])) {
+            header('Location: /users');
+            return '';
+        }
+
+        return View::make('login', [
+            'title' => 'Sign In',
+            'error' => null,
+        ]);
     }
 
     public function login(): string
     {
-        $userId = isset($_POST['user_id']) ? (int) $_POST['user_id'] : 1;
-        $_SESSION['user_id'] = $userId;
+        $username = trim($_POST['username'] ?? '');
+        $password = trim($_POST['password'] ?? '');
+        $user = $username !== '' ? $this->users->findByUsername($username) : null;
 
-        return json_encode([
-            'message' => 'Logged in',
-            'user_id' => $userId,
-        ]) ?: '{"message":"Logged in"}';
+        if ($user === null || !isset($user['password']) || $password !== (string) $user['password']) {
+            http_response_code(401);
+            return View::make('login', [
+                'title' => 'Sign In',
+                'error' => 'Invalid username or password.',
+                'form' => ['username' => $username],
+            ]);
+        }
+
+        $_SESSION['user_id'] = (int) $user['id'];
+        $_SESSION['username'] = (string) $user['username'];
+
+        header('Location: /users');
+        return '';
     }
 
     public function logout(): string
     {
         unset($_SESSION['user_id']);
+        unset($_SESSION['username']);
 
-        return json_encode(['message' => 'Logged out']) ?: '{"message":"Logged out"}';
+        header('Location: /login');
+        return '';
     }
 }
