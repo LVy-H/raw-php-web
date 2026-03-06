@@ -1,18 +1,24 @@
 <?php
 
 use App\Controllers\HomeController;
+use App\Controllers\GameController;
+use App\Controllers\NoteController;
 use App\Controllers\PongController;
 use App\Controllers\PracticeController;
 use App\Controllers\UsersController;
 use App\Controllers\LoginController;
 use App\Middleware\AuthMiddleware;
+use App\Middleware\GuestMiddleware;
 use App\Middleware\TeacherMiddleware;
 
 return [
     'GET' => [
         '/' => [HomeController::class, 'index'],
         '/ping' => [PongController::class, 'index'],
-        '/login' => [LoginController::class, 'index'],
+        '/login' => [
+            'handler' => [LoginController::class, 'index'],
+            'middleware' => [GuestMiddleware::class],
+        ],
         '/users' => [
             'handler' => [UsersController::class, 'index'],
             'middleware' => [AuthMiddleware::class],
@@ -45,13 +51,20 @@ return [
             'handler' => [PracticeController::class, 'submissions'],
             'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
         ],
+        '/games' => [
+            'handler' => [GameController::class, 'index'],
+            'middleware' => [AuthMiddleware::class],
+        ],
         '/submissions/{id}/download' => [
             'handler' => [PracticeController::class, 'downloadSubmission'],
             'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
         ],
     ],
     'POST' => [
-        '/login' => [LoginController::class, 'login'],
+        '/login' => [
+            'handler' => [LoginController::class, 'login'],
+            'middleware' => [GuestMiddleware::class],
+        ],
         '/logout' => [LoginController::class, 'logout'],
         '/users' => [
             'handler' => [UsersController::class, 'store'],
@@ -65,12 +78,32 @@ return [
             'handler' => [UsersController::class, 'delete'],
             'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
         ],
+        '/users/{id}/notes' => [
+            'handler' => [NoteController::class, 'store'],
+            'middleware' => [AuthMiddleware::class],
+        ],
+        '/notes/{id}/update' => [
+            'handler' => [NoteController::class, 'update'],
+            'middleware' => [AuthMiddleware::class],
+        ],
+        '/notes/{id}/delete' => [
+            'handler' => [NoteController::class, 'delete'],
+            'middleware' => [AuthMiddleware::class],
+        ],
         '/practices' => [
             'handler' => [PracticeController::class, 'store'],
             'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
         ],
         '/practices/{id}/submit' => [
             'handler' => [PracticeController::class, 'submit'],
+            'middleware' => [AuthMiddleware::class],
+        ],
+        '/games' => [
+            'handler' => [GameController::class, 'store'],
+            'middleware' => [AuthMiddleware::class, TeacherMiddleware::class],
+        ],
+        '/games/{id}/guess' => [
+            'handler' => [GameController::class, 'guess'],
             'middleware' => [AuthMiddleware::class],
         ],
     ],

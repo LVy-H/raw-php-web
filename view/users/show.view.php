@@ -43,23 +43,54 @@ $authId = (int) ($authUserId ?? 0);
         </div>
 
         <div class="card">
-            <h2 style="margin-top:0;">Recent Documents</h2>
-            <table>
-                <thead>
-                <tr>
-                    <th>Document</th>
-                    <th>Updated</th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach (($documents ?? []) as $document): ?>
-                    <tr>
-                        <td><?= View::escape((string) ($document['name'] ?? '')) ?></td>
-                        <td><?= View::escape((string) ($document['updated_at'] ?? '')) ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+            <h2 style="margin-top:0;">Private Notes</h2>
+            <p class="subtitle">Owner can read all notes on this profile. Writers can read and edit/delete only notes they wrote.</p>
+
+            <?php if (!empty($successMessage)): ?>
+                <div style="margin-top:10px;border:1px solid #bbf7d0;background:#f0fdf4;color:#166534;border-radius:10px;padding:10px 12px;">
+                    <?= View::escape((string) $successMessage) ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($errorMessage)): ?>
+                <div class="alert" style="margin-top:10px;"><?= View::escape((string) $errorMessage) ?></div>
+            <?php endif; ?>
+
+            <form class="form" action="/users/<?= View::escape((string) $memberId) ?>/notes" method="post" style="max-width:none;margin-top:12px;">
+                <label>
+                    <span class="muted">Leave a note for this profile</span>
+                    <textarea class="input" name="content" rows="3" style="resize:vertical;" required></textarea>
+                </label>
+                <div>
+                    <button class="btn" type="submit">Save note</button>
+                </div>
+            </form>
+
+            <?php foreach (($notes ?? []) as $note): ?>
+                <?php
+                $noteId = (int) ($note['id'] ?? 0);
+                $writerId = (int) ($note['writer_user_id'] ?? 0);
+                $isWriter = $writerId === $authId;
+                ?>
+                <div class="card" style="margin-top:12px;padding:14px;">
+                    <p class="subtitle" style="margin:0;">
+                        By <?= View::escape((string) ($note['writer_name'] ?? $note['writer_username'] ?? 'Unknown')) ?>
+                        · Updated <?= View::escape((string) ($note['updated_at'] ?? '')) ?>
+                    </p>
+
+                    <?php if ($isWriter): ?>
+                        <form class="form" action="/notes/<?= View::escape((string) $noteId) ?>/update" method="post" style="max-width:none;margin-top:8px;">
+                            <textarea class="input" name="content" rows="3" style="resize:vertical;" required><?= View::escape((string) ($note['content'] ?? '')) ?></textarea>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn" type="submit">Update</button>
+                                <button class="btn" type="submit" formaction="/notes/<?= View::escape((string) $noteId) ?>/delete">Delete</button>
+                            </div>
+                        </form>
+                    <?php else: ?>
+                        <p style="margin:8px 0 0;"><?= nl2br(View::escape((string) ($note['content'] ?? ''))) ?></p>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
         </div>
     <?php endif; ?>
 </section>

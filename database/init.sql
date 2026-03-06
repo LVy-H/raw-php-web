@@ -1,6 +1,7 @@
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS notes;
 DROP TABLE IF EXISTS submissions;
 DROP TABLE IF EXISTS practices;
+DROP TABLE IF EXISTS users;
 
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,6 +34,17 @@ CREATE TABLE submissions (
     FOREIGN KEY (practice_id) REFERENCES practices(id),
     FOREIGN KEY (student_id) REFERENCES users(id),
     UNIQUE(practice_id, student_id)
+);
+
+CREATE TABLE notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_user_id INTEGER NOT NULL,
+    writer_user_id INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (profile_user_id) REFERENCES users(id),
+    FOREIGN KEY (writer_user_id) REFERENCES users(id)
 );
 
 INSERT INTO users (name, email, phone, username, password, role) VALUES

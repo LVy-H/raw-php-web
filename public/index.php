@@ -9,6 +9,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 use App\Core\Container;
 use App\Core\Database;
 use App\Core\Router;
+use App\Models\NoteModel;
 use App\Models\PracticeModel;
 use App\Models\SubmissionModel;
 use App\Models\UserModel;
@@ -27,6 +28,10 @@ $container->set(Database::class, static function (Container $container): Databas
 
 $container->set(UserModel::class, static function (Container $container): UserModel {
     return new UserModel($container->get(Database::class));
+});
+
+$container->set(NoteModel::class, static function (Container $container): NoteModel {
+    return new NoteModel($container->get(Database::class));
 });
 
 $container->set(PracticeModel::class, static function (Container $container): PracticeModel {

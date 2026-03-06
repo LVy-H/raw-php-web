@@ -3,11 +3,15 @@
 namespace App\Controllers;
 
 use App\Core\View;
+use App\Models\NoteModel;
 use App\Models\UserModel;
 
 class UsersController
 {
-    public function __construct(private UserModel $users)
+    public function __construct(
+        private UserModel $users,
+        private NoteModel $notes
+    )
     {
     }
 
@@ -21,7 +25,8 @@ class UsersController
 
     public function show(string $id): string
     {
-        $user = $this->users->findUser(['id' => (int) $id]);
+        $memberId = (int) $id;
+        $user = $this->users->findUser(['id' => $memberId]);
 
         if ($user === null) {
             http_response_code(404);
@@ -31,13 +36,17 @@ class UsersController
             ]);
         }
 
+        $viewerId = (int) ($_SESSION['user_id'] ?? 0);
+        $successMessage = $_SESSION['flash_success'] ?? null;
+        $errorMessage = $_SESSION['flash_error'] ?? null;
+        unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+
         return View::make('users/show', [
             'title' => 'User Profile',
             'user' => $user,
-            'documents' => [
-                ['name' => 'Syllabus Notes', 'updated_at' => '2026-03-02'],
-                ['name' => 'Project Milestone', 'updated_at' => '2026-03-04'],
-            ],
+            'notes' => $this->notes->listVisibleForProfile($memberId, $viewerId),
+            'successMessage' => $successMessage,
+            'errorMessage' => $errorMessage,
         ]);
     }
 

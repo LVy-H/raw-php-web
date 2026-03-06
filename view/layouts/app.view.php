@@ -20,6 +20,7 @@ $pageTitle = isset($title) ? (string) $title : 'Class Document Manager';
             <a class="pill" href="/">Dashboard</a>
             <a class="pill" href="/users">Users</a>
             <a class="pill" href="/practices">Practices</a>
+            <a class="pill" href="/games">Games</a>
             <?php if ($authUserId !== null): ?>
                 <span class="muted"><?= View::escape($authName ?? $authUsername ?? 'user') ?> (<?= View::escape((string) ($authRole ?? 'user')) ?>)</span>
                 <form action="/logout" method="post" style="margin:0;">
