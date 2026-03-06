@@ -69,7 +69,7 @@ class PracticeController
 
         $file = $_FILES['practice_file'] ?? null;
         if (is_array($file) && (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK)) {
-            $errors[] = 'Practice file upload failed.';
+            $errors[] = $this->uploadErrorMessage((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE));
         }
 
         if (!empty($errors)) {
@@ -144,7 +144,7 @@ class PracticeController
 
         $file = $_FILES['submission_file'];
         if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            $_SESSION['flash_error'] = 'Submission upload failed.';
+            $_SESSION['flash_error'] = $this->uploadErrorMessage((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE));
             header('Location: /practices');
             return '';
         }
@@ -238,5 +238,19 @@ class PracticeController
 
         readfile($path);
         exit;
+    }
+
+    private function uploadErrorMessage(int $errorCode): string
+    {
+        return match ($errorCode) {
+            UPLOAD_ERR_INI_SIZE => 'File is too large for server limit. Current upload_max_filesize is ' . ini_get('upload_max_filesize') . '.',
+            UPLOAD_ERR_FORM_SIZE => 'File is too large for form limit.',
+            UPLOAD_ERR_PARTIAL => 'File upload was interrupted. Please try again.',
+            UPLOAD_ERR_NO_FILE => 'Please choose a file to upload.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Server temporary upload directory is missing.',
+            UPLOAD_ERR_CANT_WRITE => 'Server failed to write uploaded file.',
+            UPLOAD_ERR_EXTENSION => 'Upload stopped by a PHP extension.',
+            default => 'Upload failed due to an unknown error.',
+        };
     }
 }

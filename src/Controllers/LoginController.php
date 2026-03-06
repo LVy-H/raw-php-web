@@ -27,7 +27,7 @@ class LoginController {
     {
         $username = trim($_POST['username'] ?? '');
         $password = trim($_POST['password'] ?? '');
-        $user = $username !== '' ? $this->users->findByUsername($username) : null;
+        $user = $username !== '' ? $this->users->findUser(['username' => $username], ['*']) : null;
 
         if ($user === null || !isset($user['password']) || !password_verify($password, (string) $user['password'])) {
             http_response_code(401);

@@ -2,162 +2,87 @@
 
 namespace App\Models;
 
-use PDO;
-
 class UserModel extends BaseModel
 {
-    public function allPublic(): array
+    public function listUsers(array $filters = [], array $columns = ['id', 'name', 'email', 'phone', 'username', 'role']): array
     {
-        $stmt = $this->db->query(
-            "SELECT id, name, email, phone, username, role FROM users ORDER BY id DESC"
-        );
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        [$where, $params] = $this->buildWhere($filters);
+        $sql = sprintf('SELECT %s FROM users%s ORDER BY id DESC', implode(', ', $columns), $where);
+        return $this->db->query($sql, $params)->fetchAll();
     }
 
-    public function findPublicById(int $id): ?array
+    public function findUser(array $filters, array $columns = ['id', 'name', 'email', 'phone', 'username', 'role']): ?array
     {
-        $stmt = $this->db->query(
-            "SELECT id, name, email, phone, username, role FROM users WHERE id = :id",
-            ['id' => $id]
-        );
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        [$where, $params] = $this->buildWhere($filters);
+        $sql = sprintf('SELECT %s FROM users%s LIMIT 1', implode(', ', $columns), $where);
+        return $this->db->query($sql, $params)->fetch() ?: null;
     }
 
-    public function findByUsername(string $username): ?array
+    public function exists(string $field, string $value, ?int $excludeId = null): bool
     {
-        $stmt = $this->db->query("SELECT * FROM users WHERE username = :username", ['username' => $username]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-    }
-
-    public function findById(int $id): ?array
-    {
-        $stmt = $this->db->query("SELECT * FROM users WHERE id = :id", ['id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-    }
-
-    public function findStudentById(int $id): ?array
-    {
-        $stmt = $this->db->query(
-            "SELECT id, name, email, phone, username, role FROM users WHERE id = :id AND role = 'student'",
-            ['id' => $id]
-        );
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-    }
-
-    public function all(): array
-    {
-        $stmt = $this->db->query("SELECT * FROM users ORDER BY id DESC");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function allStudents(): array
-    {
-        $stmt = $this->db->query(
-            "SELECT id, name, email, phone, username, role FROM users WHERE role = 'student' ORDER BY id DESC"
-        );
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function findByEmail(string $email): ?array
-    {
-        $stmt = $this->db->query("SELECT * FROM users WHERE email = :email", ['email' => $email]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-    }
-
-    public function usernameExists(string $username, ?int $excludeId = null): bool
-    {
-        $sql = 'SELECT COUNT(*) FROM users WHERE username = :username';
-        $params = ['username' => $username];
-
+        $params = ['value' => $value];
+        $sql = "SELECT COUNT(*) FROM users WHERE {$field} = :value";
         if ($excludeId !== null) {
-            $sql .= ' AND id != :exclude_id';
-            $params['exclude_id'] = $excludeId;
+            $sql .= ' AND id != :excludeId';
+            $params['excludeId'] = $excludeId;
         }
-
-        $stmt = $this->db->query($sql, $params);
-        return (int) $stmt->fetchColumn() > 0;
+        return (int) $this->db->query($sql, $params)->fetchColumn() > 0;
     }
 
-    public function emailExists(string $email, ?int $excludeId = null): bool
-    {
-        $sql = 'SELECT COUNT(*) FROM users WHERE email = :email';
-        $params = ['email' => $email];
-
-        if ($excludeId !== null) {
-            $sql .= ' AND id != :exclude_id';
-            $params['exclude_id'] = $excludeId;
-        }
-
-        $stmt = $this->db->query($sql, $params);
-        return (int) $stmt->fetchColumn() > 0;
-    }
-
-    public function createStudent(array $data): void
+    public function createUser(array $data): void
     {
         $this->db->query(
             'INSERT INTO users (name, email, phone, username, password, role)
-            VALUES (:name, :email, :phone, :username, :password, :role)',
-            [
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'phone' => $data['phone'],
-                'username' => $data['username'],
-                'password' => $data['password'],
-                'role' => 'student',
-            ]
+             VALUES (:name, :email, :phone, :username, :password, :role)',
+            $data
         );
     }
 
-    public function updateStudent(int $id, array $data): void
+    public function updateUser(int $id, array $data, ?string $role = null): void
     {
-        $sql = 'UPDATE users
-                SET name = :name,
-                    email = :email,
-                    phone = :phone,
-                    username = :username';
-
-        $params = [
-            'id' => $id,
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'phone' => $data['phone'],
-            'username' => $data['username'],
-        ];
-
-        if (!empty($data['password'])) {
-            $sql .= ', password = :password';
-            $params['password'] = $data['password'];
+        $allowed = ['name', 'email', 'phone', 'username', 'password'];
+        $set = [];
+        $params = ['id' => $id];
+        foreach ($allowed as $field) {
+            if (array_key_exists($field, $data) && $data[$field] !== null && $data[$field] !== '') {
+                $set[] = "{$field} = :{$field}";
+                $params[$field] = $data[$field];
+            }
         }
-
-        $sql .= " WHERE id = :id AND role = 'student'";
-
+        if (empty($set)) {
+            return;
+        }
+        $sql = 'UPDATE users SET ' . implode(', ', $set) . ' WHERE id = :id';
+        if ($role !== null) {
+            $sql .= ' AND role = :role';
+            $params['role'] = $role;
+        }
         $this->db->query($sql, $params);
     }
 
-    public function deleteStudent(int $id): void
+    public function deleteUser(int $id, ?string $role = null): void
     {
-        $this->db->query("DELETE FROM users WHERE id = :id AND role = 'student'", ['id' => $id]);
+        $params = ['id' => $id];
+        $sql = 'DELETE FROM users WHERE id = :id';
+        if ($role !== null) {
+            $sql .= ' AND role = :role';
+            $params['role'] = $role;
+        }
+        $this->db->query($sql, $params);
     }
 
-    public function updateStudentSelf(int $id, array $data): void
+    private function buildWhere(array $filters): array
     {
-        $sql = 'UPDATE users
-                SET email = :email,
-                    phone = :phone';
-
-        $params = [
-            'id' => $id,
-            'email' => $data['email'],
-            'phone' => $data['phone'],
-        ];
-
-        if (!empty($data['password'])) {
-            $sql .= ', password = :password';
-            $params['password'] = $data['password'];
+        if (empty($filters)) {
+            return ['', []];
         }
-
-        $sql .= " WHERE id = :id AND role = 'student'";
-
-        $this->db->query($sql, $params);
+        $clauses = [];
+        $params = [];
+        foreach ($filters as $field => $value) {
+            $param = 'f_' . $field;
+            $clauses[] = "{$field} = :{$param}";
+            $params[$param] = $value;
+        }
+        return [' WHERE ' . implode(' AND ', $clauses), $params];
     }
 }

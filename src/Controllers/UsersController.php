@@ -15,13 +15,13 @@ class UsersController
     {
         return View::make('users/index', [
             'title' => 'User Directory',
-            'users' => $this->users->allPublic(),
+            'users' => $this->users->listUsers(),
         ]);
     }
 
     public function show(string $id): string
     {
-        $user = $this->users->findPublicById((int) $id);
+        $user = $this->users->findUser(['id' => (int) $id]);
 
         if ($user === null) {
             http_response_code(404);
@@ -71,9 +71,13 @@ class UsersController
             ]);
         }
 
-        $this->users->createStudent([
-            ...$input,
+        $this->users->createUser([
+            'name' => $input['name'],
+            'email' => $input['email'],
+            'phone' => $input['phone'],
+            'username' => $input['username'],
             'password' => password_hash($input['password'], PASSWORD_DEFAULT),
+            'role' => 'student',
         ]);
 
         header('Location: /users');
@@ -85,7 +89,7 @@ class UsersController
         $userId = (int) ($_SESSION['user_id'] ?? 0);
         $role = (string) ($_SESSION['user_role'] ?? '');
         $targetId = (int) $id;
-        $target = $this->users->findPublicById($targetId);
+        $target = $this->users->findUser(['id' => $targetId]);
 
         if ($target === null) {
             http_response_code(404);
@@ -137,7 +141,7 @@ class UsersController
         $currentUserId = (int) ($_SESSION['user_id'] ?? 0);
         $currentRole = (string) ($_SESSION['user_role'] ?? '');
         $targetId = (int) $id;
-        $target = $this->users->findPublicById($targetId);
+        $target = $this->users->findUser(['id' => $targetId]);
 
         if ($target === null) {
             http_response_code(404);
@@ -171,10 +175,13 @@ class UsersController
                 ? password_hash($input['password'], PASSWORD_DEFAULT)
                 : null;
 
-            $this->users->updateStudent($targetId, [
-                ...$input,
+            $this->users->updateUser($targetId, [
+                'name' => $input['name'],
+                'email' => $input['email'],
+                'phone' => $input['phone'],
+                'username' => $input['username'],
                 'password' => $passwordHash,
-            ]);
+            ], 'student');
 
             header('Location: /users');
             return '';
@@ -203,11 +210,11 @@ class UsersController
                 ? password_hash($input['password'], PASSWORD_DEFAULT)
                 : null;
 
-            $this->users->updateStudentSelf($targetId, [
+            $this->users->updateUser($targetId, [
                 'email' => $input['email'],
                 'phone' => $input['phone'],
                 'password' => $passwordHash,
-            ]);
+            ], 'student');
 
             header('Location: /users/' . $targetId);
             return '';
@@ -218,7 +225,7 @@ class UsersController
 
     public function delete(string $id): string
     {
-        $this->users->deleteStudent((int) $id);
+        $this->users->deleteUser((int) $id, 'student');
         header('Location: /users');
         return '';
     }
@@ -258,11 +265,11 @@ class UsersController
             $errors[] = 'Password is required.';
         }
 
-        if ($input['username'] !== '' && $this->users->usernameExists($input['username'], $excludeId)) {
+        if ($input['username'] !== '' && $this->users->exists('username', $input['username'], $excludeId)) {
             $errors[] = 'Username is already used.';
         }
 
-        if ($input['email'] !== '' && $this->users->emailExists($input['email'], $excludeId)) {
+        if ($input['email'] !== '' && $this->users->exists('email', $input['email'], $excludeId)) {
             $errors[] = 'Email is already used.';
         }
 
@@ -281,7 +288,7 @@ class UsersController
             $errors[] = 'Phone is required.';
         }
 
-        if ($input['email'] !== '' && $this->users->emailExists($input['email'], $selfId)) {
+        if ($input['email'] !== '' && $this->users->exists('email', $input['email'], $selfId)) {
             $errors[] = 'Email is already used.';
         }
 
