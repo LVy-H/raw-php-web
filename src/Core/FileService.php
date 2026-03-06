@@ -4,14 +4,21 @@ namespace App\Core;
 
 class FileService
 {
-    public function moveUploadedFile(array $file, string $folder): string
+    public function moveUploadedFile(array $file, string $folder, bool $preserveName = false): string
     {
         $originalName = (string) ($file['name'] ?? 'file');
-        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-        $storedName = bin2hex(random_bytes(16));
-
-        if ($extension !== '') {
-            $storedName .= '.' . strtolower($extension);
+        
+        if ($preserveName) {
+            $storedName = rawurlencode($originalName);
+            if ($storedName === '' || $storedName === '.' || $storedName === '..') {
+                $storedName = 'sanitized_file_' . bin2hex(random_bytes(4));
+            }
+        } else {
+            $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+            $storedName = bin2hex(random_bytes(16));
+            if ($extension !== '') {
+                $storedName .= '.' . strtolower($extension);
+            }
         }
 
         $directory = $this->uploadPath($folder);

@@ -50,7 +50,7 @@ class GameController extends BaseController
         }
 
         try {
-            $uploadedName = $this->fileService->moveUploadedFile($file, 'games/' . $gameId);
+            $uploadedName = $this->fileService->moveUploadedFile($file, 'games/' . $gameId, true);
         } catch (\RuntimeException) {
             return $this->redirect('/games', null, 'Failed to save uploaded game file.');
         }
@@ -177,7 +177,7 @@ class GameController extends BaseController
 
             return [
                 'path' => $path,
-                'filename' => basename($path),
+                'filename' => rawurldecode(basename($path)),
             ];
         }
 
