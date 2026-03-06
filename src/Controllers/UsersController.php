@@ -5,12 +5,17 @@ namespace App\Controllers;
 use App\Core\View;
 use App\Models\NoteModel;
 use App\Models\UserModel;
+use App\Core\BaseController;
+use App\Core\Gate;
+use App\Core\ValidationService;
 
-class UsersController
+class UsersController extends BaseController
 {
     public function __construct(
         private UserModel $users,
-        private NoteModel $notes
+        private NoteModel $notes,
+        private Gate $gate,
+        private ValidationService $validator
     )
     {
     }
@@ -29,11 +34,7 @@ class UsersController
         $user = $this->users->findUser(['id' => $memberId]);
 
         if ($user === null) {
-            http_response_code(404);
-            return View::make('users/show', [
-                'title' => 'User Not Found',
-                'user' => null,
-            ]);
+            return $this->abort(404, 'User Not Found');
         }
 
         $viewerId = (int) ($_SESSION['user_id'] ?? 0);
@@ -68,7 +69,21 @@ class UsersController
     public function store(): string
     {
         $input = $this->collectInput();
-        $errors = $this->validate($input, true);
+        $errors = $this->validator->validate($input, [
+            'name' => 'required',
+            'email' => 'required|email',
+            'phone' => 'required',
+            'username' => 'required',
+            'password' => 'required',
+        ]);
+
+        if ($input['username'] !== '' && $this->users->exists('username', $input['username'])) {
+            $errors[] = 'Username is already used.';
+        }
+
+        if ($input['email'] !== '' && $this->users->exists('email', $input['email'])) {
+            $errors[] = 'Email is already used.';
+        }
 
         if (!empty($errors)) {
             http_response_code(422);
@@ -89,8 +104,7 @@ class UsersController
             'role' => 'student',
         ]);
 
-        header('Location: /users');
-        return '';
+        return $this->redirect('/users');
     }
 
     public function edit(string $id): string
@@ -101,48 +115,26 @@ class UsersController
         $target = $this->users->findUser(['id' => $targetId]);
 
         if ($target === null) {
-            http_response_code(404);
-            return View::make('users/show', [
-                'title' => 'User Not Found',
-                'user' => null,
-            ]);
+            return $this->abort(404, 'User Not Found');
         }
 
-        if ($role === 'teacher') {
-            if (($target['role'] ?? null) !== 'student') {
-                return $this->forbidden('Teachers can only edit student accounts.');
-            }
+        $target['_type'] = 'user'; // Inject type for the Gate
+        $this->authorize($this->gate->allows('update', $target));
 
-            return View::make('users/form', [
-                'title' => 'Edit Student',
-                'mode' => 'edit-teacher',
-                'studentId' => $targetId,
-                'errors' => [],
-                'form' => [
-                    'name' => $target['name'] ?? '',
-                    'email' => $target['email'] ?? '',
-                    'phone' => $target['phone'] ?? '',
-                    'username' => $target['username'] ?? '',
-                ],
-            ]);
-        }
+        $mode = $role === 'teacher' ? 'edit-teacher' : 'edit-self';
 
-        if ($role === 'student' && $userId === $targetId) {
-            return View::make('users/form', [
-                'title' => 'Edit My Account',
-                'mode' => 'edit-self',
-                'studentId' => $targetId,
-                'errors' => [],
-                'form' => [
-                    'name' => $target['name'] ?? '',
-                    'email' => $target['email'] ?? '',
-                    'phone' => $target['phone'] ?? '',
-                    'username' => $target['username'] ?? '',
-                ],
-            ]);
-        }
-
-        return $this->forbidden('You can only edit your own account.');
+        return View::make('users/form', [
+            'title' => $role === 'teacher' ? 'Edit Student' : 'Edit My Account',
+            'mode' => $mode,
+            'studentId' => $targetId,
+            'errors' => [],
+            'form' => [
+                'name' => $target['name'] ?? '',
+                'email' => $target['email'] ?? '',
+                'phone' => $target['phone'] ?? '',
+                'username' => $target['username'] ?? '',
+            ],
+        ]);
     }
 
     public function update(string $id): string
@@ -153,90 +145,80 @@ class UsersController
         $target = $this->users->findUser(['id' => $targetId]);
 
         if ($target === null) {
-            http_response_code(404);
-            return View::make('users/show', [
-                'title' => 'User Not Found',
-                'user' => null,
+            return $this->abort(404, 'User Not Found');
+        }
+
+        $target['_type'] = 'user';
+        $this->authorize($this->gate->allows('update', $target));
+
+        $input = $this->collectInput();
+        $isTeacher = $currentRole === 'teacher';
+
+        $rules = [
+            'email' => 'required|email',
+            'phone' => 'required',
+        ];
+
+        if ($isTeacher) {
+            $rules['name'] = 'required';
+            $rules['username'] = 'required';
+        }
+
+        $errors = $this->validator->validate($input, $rules);
+
+        if ($isTeacher && $input['username'] !== '' && $this->users->exists('username', $input['username'], $targetId)) {
+            $errors[] = 'Username is already used.';
+        }
+
+        if ($input['email'] !== '' && $this->users->exists('email', $input['email'], $targetId)) {
+            $errors[] = 'Email is already used.';
+        }
+
+        if (!empty($errors)) {
+            http_response_code(422);
+            $mode = $isTeacher ? 'edit-teacher' : 'edit-self';
+            return View::make('users/form', [
+                'title' => $isTeacher ? 'Edit Student' : 'Edit My Account',
+                'mode' => $mode,
+                'studentId' => $targetId,
+                'errors' => $errors,
+                'form' => [
+                    'name' => $isTeacher ? $input['name'] : ($target['name'] ?? ''),
+                    'email' => $input['email'],
+                    'phone' => $input['phone'],
+                    'username' => $isTeacher ? $input['username'] : ($target['username'] ?? ''),
+                ],
             ]);
         }
 
-        $input = $this->collectInput();
+        $passwordHash = trim($input['password']) !== ''
+            ? password_hash($input['password'], PASSWORD_DEFAULT)
+            : null;
 
-        if ($currentRole === 'teacher') {
-            if (($target['role'] ?? null) !== 'student') {
-                return $this->forbidden('Teachers can only edit student accounts.');
-            }
+        $updateData = [
+            'email' => $input['email'],
+            'phone' => $input['phone'],
+            'password' => $passwordHash,
+        ];
 
-            $errors = $this->validate($input, false, $targetId);
-
-            if (!empty($errors)) {
-                http_response_code(422);
-                return View::make('users/form', [
-                    'title' => 'Edit Student',
-                    'mode' => 'edit-teacher',
-                    'studentId' => $targetId,
-                    'errors' => $errors,
-                    'form' => $input,
-                ]);
-            }
-
-            $passwordHash = trim($input['password']) !== ''
-                ? password_hash($input['password'], PASSWORD_DEFAULT)
-                : null;
-
-            $this->users->updateUser($targetId, [
-                'name' => $input['name'],
-                'email' => $input['email'],
-                'phone' => $input['phone'],
-                'username' => $input['username'],
-                'password' => $passwordHash,
-            ], 'student');
-
-            header('Location: /users');
-            return '';
+        if ($isTeacher) {
+            $updateData['name'] = $input['name'];
+            $updateData['username'] = $input['username'];
         }
 
-        if ($currentRole === 'student' && $currentUserId === $targetId && ($target['role'] ?? null) === 'student') {
-            $selfErrors = $this->validateSelfEdit($input, $targetId);
+        $this->users->updateUser($targetId, $updateData, 'student');
 
-            if (!empty($selfErrors)) {
-                http_response_code(422);
-                return View::make('users/form', [
-                    'title' => 'Edit My Account',
-                    'mode' => 'edit-self',
-                    'studentId' => $targetId,
-                    'errors' => $selfErrors,
-                    'form' => [
-                        'name' => $target['name'] ?? '',
-                        'email' => $input['email'],
-                        'phone' => $input['phone'],
-                        'username' => $target['username'] ?? '',
-                    ],
-                ]);
-            }
-
-            $passwordHash = trim($input['password']) !== ''
-                ? password_hash($input['password'], PASSWORD_DEFAULT)
-                : null;
-
-            $this->users->updateUser($targetId, [
-                'email' => $input['email'],
-                'phone' => $input['phone'],
-                'password' => $passwordHash,
-            ], 'student');
-
-            header('Location: /users/' . $targetId);
-            return '';
+        if ($isTeacher) {
+            return $this->redirect('/users');
         }
 
-        return $this->forbidden('You do not have permission to edit this account.');
+        return $this->redirect('/users/' . $targetId);
     }
 
     public function delete(string $id): string
     {
         $this->users->deleteUser((int) $id, 'student');
-        header('Location: /users');
-        return '';
+        return $this->redirect('/users');
     }
 
     private function collectInput(): array
@@ -250,67 +232,4 @@ class UsersController
         ];
     }
 
-    private function validate(array $input, bool $creating, ?int $excludeId = null): array
-    {
-        $errors = [];
-
-        if ($input['name'] === '') {
-            $errors[] = 'Name is required.';
-        }
-
-        if ($input['email'] === '' || filter_var($input['email'], FILTER_VALIDATE_EMAIL) === false) {
-            $errors[] = 'A valid email is required.';
-        }
-
-        if ($input['phone'] === '') {
-            $errors[] = 'Phone is required.';
-        }
-
-        if ($input['username'] === '') {
-            $errors[] = 'Username is required.';
-        }
-
-        if ($creating && $input['password'] === '') {
-            $errors[] = 'Password is required.';
-        }
-
-        if ($input['username'] !== '' && $this->users->exists('username', $input['username'], $excludeId)) {
-            $errors[] = 'Username is already used.';
-        }
-
-        if ($input['email'] !== '' && $this->users->exists('email', $input['email'], $excludeId)) {
-            $errors[] = 'Email is already used.';
-        }
-
-        return $errors;
-    }
-
-    private function validateSelfEdit(array $input, int $selfId): array
-    {
-        $errors = [];
-
-        if ($input['email'] === '' || filter_var($input['email'], FILTER_VALIDATE_EMAIL) === false) {
-            $errors[] = 'A valid email is required.';
-        }
-
-        if ($input['phone'] === '') {
-            $errors[] = 'Phone is required.';
-        }
-
-        if ($input['email'] !== '' && $this->users->exists('email', $input['email'], $selfId)) {
-            $errors[] = 'Email is already used.';
-        }
-
-        return $errors;
-    }
-
-    private function forbidden(string $message): string
-    {
-        http_response_code(403);
-        return View::make('users/show', [
-            'title' => 'Forbidden',
-            'user' => null,
-            'forbiddenMessage' => $message,
-        ]);
-    }
 }

@@ -3,9 +3,18 @@
 namespace App\Controllers;
 
 use App\Core\View;
+use App\Core\BaseController;
+use App\Core\Gate;
 
-class GameController
+use App\Core\FileService;
+
+class GameController extends BaseController
 {
+    public function __construct(
+        private Gate $gate,
+        private FileService $fileService
+    ) {
+    }
     public function index(): string
     {
         $successMessage = $_SESSION['flash_success'] ?? null;
@@ -22,23 +31,16 @@ class GameController
 
     public function store(): string
     {
-        if (($_SESSION['user_role'] ?? null) !== 'teacher') {
-            http_response_code(403);
-            return 'Only teachers can create games.';
-        }
+        $this->authorize(($_SESSION['user_role'] ?? null) === 'teacher', 'Only teachers can create games.');
 
         $hint = trim($_POST['hint'] ?? '');
         if ($hint === '') {
-            $_SESSION['flash_error'] = 'Hint is required.';
-            header('Location: /games');
-            return '';
+            return $this->redirect('/games', null, 'Hint is required.');
         }
 
         $file = $_FILES['game_file'] ?? null;
         if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            $_SESSION['flash_error'] = 'Game file upload failed.';
-            header('Location: /games');
-            return '';
+            return $this->redirect('/games', null, 'Game file upload failed.');
         }
 
         $gameId = bin2hex(random_bytes(8));
@@ -47,16 +49,10 @@ class GameController
             mkdir($folder, 0775, true);
         }
 
-        $uploadedName = basename((string) ($file['name'] ?? 'reward.txt'));
-        if ($uploadedName === '') {
-            $uploadedName = 'reward.txt';
-        }
-
-        $filePath = $folder . '/' . $uploadedName;
-        if (!move_uploaded_file((string) $file['tmp_name'], $filePath)) {
-            $_SESSION['flash_error'] = 'Failed to save uploaded game file.';
-            header('Location: /games');
-            return '';
+        try {
+            $uploadedName = $this->fileService->moveUploadedFile($file, 'games/' . $gameId);
+        } catch (\RuntimeException) {
+            return $this->redirect('/games', null, 'Failed to save uploaded game file.');
         }
 
         $meta = [
@@ -71,29 +67,21 @@ class GameController
         }
         file_put_contents($metaRoot . '/' . $gameId . '.json', json_encode($meta, JSON_PRETTY_PRINT));
 
-        $_SESSION['flash_success'] = 'Game created successfully.';
-        header('Location: /games');
-        return '';
+        return $this->redirect('/games', 'Game created successfully.');
     }
 
     public function guess(string $id): string
     {
-        if (($_SESSION['user_role'] ?? null) !== 'student') {
-            http_response_code(403);
-            return 'Only students can submit guesses.';
-        }
+        $this->authorize(($_SESSION['user_role'] ?? null) === 'student', 'Only students can submit guesses.');
 
         $meta = $this->loadGameMeta($id);
         if ($meta === null) {
-            http_response_code(404);
-            return 'Game not found.';
+            return $this->abort(404, 'Game not found.');
         }
 
         $rewardFile = $this->resolveRewardFile($id);
         if ($rewardFile === null) {
-            $_SESSION['flash_error'] = 'Reward file not found.';
-            header('Location: /games');
-            return '';
+            return $this->redirect('/games', null, 'Reward file not found.');
         }
 
         $guess = trim($_POST['guess'] ?? '');
@@ -101,9 +89,7 @@ class GameController
         $correct = strcasecmp($guess, $answer) === 0;
 
         if (!$correct) {
-            $_SESSION['flash_error'] = 'Wrong guess. Try again.';
-            header('Location: /games');
-            return '';
+            return $this->redirect('/games', null, 'Wrong guess. Try again.');
         }
 
         return View::make('games/index', [

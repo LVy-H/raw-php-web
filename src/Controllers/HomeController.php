@@ -2,7 +2,9 @@
 
 namespace App\Controllers;
 
-class HomeController
+use App\Core\BaseController;
+
+class HomeController extends BaseController
 {
     public function index(): string
     {
@@ -10,7 +12,6 @@ class HomeController
             ? '/users/' . (int) $_SESSION['user_id']
             : '/login';
 
-        header('Location: ' . $destination);
-        return '';
+        return $this->redirect($destination);
     }
 }

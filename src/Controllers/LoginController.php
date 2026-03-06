@@ -4,8 +4,9 @@ namespace App\Controllers;
 
 use App\Core\View;
 use App\Models\UserModel;
+use App\Core\BaseController;
 
-class LoginController {
+class LoginController extends BaseController {
     public function __construct(private UserModel $users)
     {
     }
@@ -13,8 +14,7 @@ class LoginController {
     public function index(): string
     {
         if (isset($_SESSION['user_id'])) {
-            header('Location: /users');
-            return '';
+            return $this->redirect('/users');
         }
 
         return View::make('login', [
@@ -45,8 +45,7 @@ class LoginController {
 
         session_regenerate_id(true);
 
-        header('Location: /users');
-        return '';
+        return $this->redirect('/users');
     }
 
     public function logout(): string
@@ -56,7 +55,6 @@ class LoginController {
         session_start();
         session_regenerate_id(true);
 
-        header('Location: /login');
-        return '';
+        return $this->redirect('/login');
     }
 }

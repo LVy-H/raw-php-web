@@ -5,12 +5,17 @@ namespace App\Controllers;
 use App\Core\View;
 use App\Models\PracticeModel;
 use App\Models\SubmissionModel;
+use App\Core\BaseController;
+use App\Core\Gate;
+use App\Core\FileService;
 
-class PracticeController
+class PracticeController extends BaseController
 {
     public function __construct(
         private PracticeModel $practices,
-        private SubmissionModel $submissions
+        private SubmissionModel $submissions,
+        private Gate $gate,
+        private FileService $fileService
     ) {
     }
 
@@ -69,7 +74,7 @@ class PracticeController
 
         $file = $_FILES['practice_file'] ?? null;
         if (is_array($file) && (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK)) {
-            $errors[] = $this->uploadErrorMessage((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE));
+            $errors[] = $this->fileService->getUploadErrorMessage((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE));
         }
 
         if (!empty($errors)) {
@@ -85,7 +90,7 @@ class PracticeController
         }
 
         try {
-            $storedName = $this->moveUploadedFile($file, 'practices');
+            $storedName = $this->fileService->moveUploadedFile($file, 'practices');
         } catch (\RuntimeException) {
             http_response_code(422);
             return View::make('practices/create', [
@@ -106,9 +111,7 @@ class PracticeController
             'uploaded_by' => (int) ($_SESSION['user_id'] ?? 0),
         ]);
 
-        $_SESSION['flash_success'] = 'Practice uploaded successfully.';
-        header('Location: /practices');
-        return '';
+        return $this->redirect('/practices', 'Practice uploaded successfully.');
     }
 
     public function download(string $id): string
@@ -119,42 +122,32 @@ class PracticeController
             return 'Practice not found.';
         }
 
-        $path = $this->uploadPath('practices') . '/' . $practice['stored_name'];
-        return $this->streamFile($path, (string) $practice['file_name']);
+        $path = $this->fileService->uploadPath('practices') . '/' . $practice['stored_name'];
+        return $this->fileService->streamFile($path, (string) $practice['file_name']);
     }
 
     public function submit(string $id): string
     {
-        if (($_SESSION['user_role'] ?? null) !== 'student') {
-            http_response_code(403);
-            return 'Only students can submit practice files.';
-        }
+        $this->authorize(($_SESSION['user_role'] ?? null) === 'student', 'Only students can submit practice files.');
 
         $practice = $this->practices->findById((int) $id);
         if ($practice === null) {
-            http_response_code(404);
-            return 'Practice not found.';
+            return $this->abort(404, 'Practice not found.');
         }
 
         if (!isset($_FILES['submission_file']) || !is_array($_FILES['submission_file'])) {
-            $_SESSION['flash_error'] = 'Submission file is required.';
-            header('Location: /practices');
-            return '';
+            return $this->redirect('/practices', null, 'Submission file is required.');
         }
 
         $file = $_FILES['submission_file'];
         if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            $_SESSION['flash_error'] = $this->uploadErrorMessage((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE));
-            header('Location: /practices');
-            return '';
+            return $this->redirect('/practices', null, $this->fileService->getUploadErrorMessage((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE)));
         }
 
         try {
-            $storedName = $this->moveUploadedFile($file, 'submissions');
+            $storedName = $this->fileService->moveUploadedFile($file, 'submissions');
         } catch (\RuntimeException) {
-            $_SESSION['flash_error'] = 'Failed to save submission file. Please try again.';
-            header('Location: /practices');
-            return '';
+            return $this->redirect('/practices', null, 'Failed to save submission file. Please try again.');
         }
 
         $this->submissions->upsert(
@@ -164,17 +157,14 @@ class PracticeController
             $storedName
         );
 
-        $_SESSION['flash_success'] = 'Submission uploaded successfully.';
-        header('Location: /practices');
-        return '';
+        return $this->redirect('/practices', 'Submission uploaded successfully.');
     }
 
     public function submissions(string $id): string
     {
         $practice = $this->practices->findById((int) $id);
         if ($practice === null) {
-            http_response_code(404);
-            return 'Practice not found.';
+            return $this->abort(404, 'Practice not found.');
         }
 
         return View::make('practices/submissions', [
@@ -188,71 +178,10 @@ class PracticeController
     {
         $submission = $this->submissions->findById((int) $id);
         if ($submission === null) {
-            http_response_code(404);
-            return 'Submission not found.';
+            return $this->abort(404, 'Submission not found.');
         }
 
-        $path = $this->uploadPath('submissions') . '/' . $submission['stored_name'];
-        return $this->streamFile($path, (string) $submission['file_name']);
-    }
-
-    private function moveUploadedFile(array $file, string $folder): string
-    {
-        $originalName = (string) ($file['name'] ?? 'file');
-        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-        $storedName = bin2hex(random_bytes(16));
-
-        if ($extension !== '') {
-            $storedName .= '.' . strtolower($extension);
-        }
-
-        $directory = $this->uploadPath($folder);
-        if (!is_dir($directory)) {
-            mkdir($directory, 0775, true);
-        }
-
-        $tmpName = (string) ($file['tmp_name'] ?? '');
-        if ($tmpName === '' || !move_uploaded_file($tmpName, $directory . '/' . $storedName)) {
-            throw new \RuntimeException('Failed to move uploaded file.');
-        }
-
-        return $storedName;
-    }
-
-    private function uploadPath(string $folder): string
-    {
-        return dirname(__DIR__, 2) . '/storage/uploads/' . $folder;
-    }
-
-    private function streamFile(string $path, string $downloadName): string
-    {
-        if (!is_file($path)) {
-            http_response_code(404);
-            return 'File not found.';
-        }
-
-        $safeName = basename($downloadName);
-
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . str_replace(['"', '\\'], '_', $safeName) . '"; filename*=UTF-8\'\'' . rawurlencode($safeName));
-        header('Content-Length: ' . (string) filesize($path));
-
-        readfile($path);
-        exit;
-    }
-
-    private function uploadErrorMessage(int $errorCode): string
-    {
-        return match ($errorCode) {
-            UPLOAD_ERR_INI_SIZE => 'File is too large for server limit. Current upload_max_filesize is ' . ini_get('upload_max_filesize') . '.',
-            UPLOAD_ERR_FORM_SIZE => 'File is too large for form limit.',
-            UPLOAD_ERR_PARTIAL => 'File upload was interrupted. Please try again.',
-            UPLOAD_ERR_NO_FILE => 'Please choose a file to upload.',
-            UPLOAD_ERR_NO_TMP_DIR => 'Server temporary upload directory is missing.',
-            UPLOAD_ERR_CANT_WRITE => 'Server failed to write uploaded file.',
-            UPLOAD_ERR_EXTENSION => 'Upload stopped by a PHP extension.',
-            default => 'Upload failed due to an unknown error.',
-        };
+        $path = $this->fileService->uploadPath('submissions') . '/' . $submission['stored_name'];
+        return $this->fileService->streamFile($path, (string) $submission['file_name']);    
     }
 }

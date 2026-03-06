@@ -4,12 +4,15 @@ namespace App\Controllers;
 
 use App\Models\NoteModel;
 use App\Models\UserModel;
+use App\Core\BaseController;
+use App\Core\Gate;
 
-class NoteController
+class NoteController extends BaseController
 {
     public function __construct(
         private NoteModel $notes,
-        private UserModel $users
+        private UserModel $users,
+        private Gate $gate
     ) {
     }
 
@@ -17,67 +20,46 @@ class NoteController
     {
         $targetId = (int) $profileId;
         if ($this->users->findUser(['id' => $targetId]) === null) {
-            http_response_code(404);
-            return 'User not found.';
+            return $this->abort(404, 'User not found.');
         }
 
         $content = trim($_POST['content'] ?? '');
         if ($content === '') {
-            $_SESSION['flash_error'] = 'Note content is required.';
-            header('Location: /users/' . $targetId);
-            return '';
+            return $this->redirect('/users/' . $targetId, null, 'Note content is required.');
         }
 
         $this->notes->create($targetId, (int) ($_SESSION['user_id'] ?? 0), $content);
-        $_SESSION['flash_success'] = 'Note saved.';
-        header('Location: /users/' . $targetId);
-        return '';
+        return $this->redirect('/users/' . $targetId, 'Note saved.');
     }
 
     public function update(string $noteId): string
     {
         $note = $this->notes->findById((int) $noteId);
         if ($note === null) {
-            http_response_code(404);
-            return 'Note not found.';
+            return $this->abort(404, 'Note not found.');
         }
 
-        $writerId = (int) ($_SESSION['user_id'] ?? 0);
-        if ((int) $note['writer_user_id'] !== $writerId) {
-            http_response_code(403);
-            return 'Forbidden.';
-        }
+        $this->authorize($this->gate->allows('update', $note));
 
         $content = trim($_POST['content'] ?? '');
         if ($content === '') {
-            $_SESSION['flash_error'] = 'Note content is required.';
-            header('Location: /users/' . (int) $note['profile_user_id']);
-            return '';
+            return $this->redirect('/users/' . (int) $note['profile_user_id'], null, 'Note content is required.');
         }
 
-        $this->notes->updateContent((int) $noteId, $writerId, $content);
-        $_SESSION['flash_success'] = 'Note updated.';
-        header('Location: /users/' . (int) $note['profile_user_id']);
-        return '';
+        $this->notes->updateContent((int) $noteId, (int) ($_SESSION['user_id'] ?? 0), $content);
+        return $this->redirect('/users/' . (int) $note['profile_user_id'], 'Note updated.');
     }
 
     public function delete(string $noteId): string
     {
         $note = $this->notes->findById((int) $noteId);
         if ($note === null) {
-            http_response_code(404);
-            return 'Note not found.';
+            return $this->abort(404, 'Note not found.');
         }
 
-        $writerId = (int) ($_SESSION['user_id'] ?? 0);
-        if ((int) $note['writer_user_id'] !== $writerId) {
-            http_response_code(403);
-            return 'Forbidden.';
-        }
+        $this->authorize($this->gate->allows('delete', $note));
 
-        $this->notes->deleteByIdAndWriter((int) $noteId, $writerId);
-        $_SESSION['flash_success'] = 'Note deleted.';
-        header('Location: /users/' . (int) $note['profile_user_id']);
-        return '';
+        $this->notes->deleteByIdAndWriter((int) $noteId, (int) ($_SESSION['user_id'] ?? 0));
+        return $this->redirect('/users/' . (int) $note['profile_user_id'], 'Note deleted.');
     }
 }
