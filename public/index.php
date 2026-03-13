@@ -67,3 +67,7 @@ $router = new Router($routes, $container);
 
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
 
+?>
+<code>
+<?=  var_dump($_SERVER); ?>
+</code>

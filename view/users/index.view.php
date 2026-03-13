@@ -24,6 +24,7 @@ $authId = (int) ($authUserId ?? 0);
             <thead>
             <tr>
                 <th>ID</th>
+                <th>Avatar</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
@@ -42,6 +43,14 @@ $authId = (int) ($authUserId ?? 0);
                 ?>
                 <tr>
                     <td><?= View::escape((string) $memberId) ?></td>
+                    <td>
+                        <?php
+                        $avatarUrl = !empty($member['avatar']) 
+                            ? '/users/' . $memberId . '/avatar' 
+                            : 'about:blank';
+                        ?>
+                        <img src="<?= htmlspecialchars($avatarUrl) ?>" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: block;">
+                    </td>
                     <td><?= View::escape((string) ($member['name'] ?? '')) ?></td>
                     <td><?= View::escape((string) ($member['email'] ?? '')) ?></td>
                     <td><?= View::escape((string) ($member['phone'] ?? '')) ?></td>

@@ -8,6 +8,7 @@ use App\Models\UserModel;
 use App\Core\BaseController;
 use App\Core\Gate;
 use App\Core\ValidationService;
+use App\Core\FileService;
 
 class UsersController extends BaseController
 {
@@ -15,7 +16,8 @@ class UsersController extends BaseController
         private UserModel $users,
         private NoteModel $notes,
         private Gate $gate,
-        private ValidationService $validator
+        private ValidationService $validator,
+        private FileService $fileService
     )
     {
     }
@@ -206,6 +208,18 @@ class UsersController extends BaseController
             $updateData['username'] = $input['username'];
         }
 
+        if (isset($_FILES['avatar_file']) && is_array($_FILES['avatar_file'])) {
+            $file = $_FILES['avatar_file'];
+            if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+                try {
+                    $storedName = $this->fileService->moveUploadedFile($file, 'avatars');
+                    $updateData['avatar'] = $storedName;
+                } catch (\RuntimeException) {
+                    $_SESSION['flash_error'] = 'Failed to upload avatar.';
+                }
+            }
+        }
+
         $this->users->updateUser($targetId, $updateData, 'student');
 
         if ($isTeacher) {
@@ -230,6 +244,19 @@ class UsersController extends BaseController
             'username' => trim($_POST['username'] ?? ''),
             'password' => trim($_POST['password'] ?? ''),
         ];
+    }
+
+    public function avatar(string $id): string
+    {
+        $targetId = (int) $id;
+        $target = $this->users->findUser(['id' => $targetId]);
+
+        if ($target === null || empty($target['avatar'])) {
+            return $this->abort(404, 'Avatar Not Found');
+        }
+
+        $path = $this->fileService->uploadPath('avatars') . '/' . $target['avatar'];
+        return $this->fileService->streamFile($path, $target['avatar']);
     }
 
 }

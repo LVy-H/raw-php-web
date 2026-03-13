@@ -10,6 +10,7 @@ CREATE TABLE users (
     phone VARCHAR(32) NOT NULL,
     username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    avatar VARCHAR(255) DEFAULT NULL,
     role VARCHAR(32) NOT NULL DEFAULT 'student' CHECK(role IN ('teacher', 'student'))
 );
 

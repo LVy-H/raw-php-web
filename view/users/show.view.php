@@ -21,7 +21,16 @@ $authId = (int) ($authUserId ?? 0);
         $canSelfEdit = !$isTeacher && $memberRole === 'student' && $memberId === $authId;
         ?>
         <div class="card">
-            <h1 class="title" style="font-size: 28px;">@<?= View::escape((string) ($member['username'] ?? '')) ?></h1>
+            <?php
+            $avatarUrl = !empty($member['avatar']) 
+                ? '/users/' . $memberId . '/avatar' 
+                : 'about:blank';
+            ?>
+
+            <div style="margin-bottom: 16px;">
+                <img src="<?= htmlspecialchars($avatarUrl) ?>" alt="User Avatar" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #e2e8f0;">
+            </div>
+            <h1 class="title" style="margin-top:0; font-size: 28px;">@<?= View::escape((string) ($member['username'] ?? '')) ?></h1>
             <p class="subtitle">User ID: <?= View::escape((string) $memberId) ?></p>
             <p class="subtitle">Role: <?= View::escape($memberRole) ?></p>
             <p class="subtitle">Name: <?= View::escape((string) ($member['name'] ?? '')) ?></p>

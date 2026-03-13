@@ -36,6 +36,10 @@ return [
             'handler' => [UsersController::class, 'edit'],
             'middleware' => [AuthMiddleware::class],
         ],
+        '/users/{id}/avatar' => [
+            'handler' => [UsersController::class, 'avatar'],
+            'middleware' => [AuthMiddleware::class],
+        ],
         '/practices' => [
             'handler' => [PracticeController::class, 'index'],
             'middleware' => [AuthMiddleware::class],

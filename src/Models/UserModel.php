@@ -6,11 +6,11 @@ use InvalidArgumentException;
 
 class UserModel extends BaseModel
 {
-    private const ALLOWED_COLUMNS = ['id', 'name', 'email', 'phone', 'username', 'role', 'password', '*'];
+    private const ALLOWED_COLUMNS = ['id', 'name', 'email', 'phone', 'username', 'role', 'password', 'avatar', '*'];
     private const ALLOWED_FILTER_FIELDS = ['id', 'username', 'email', 'role'];
     private const ALLOWED_EXISTS_FIELDS = ['username', 'email'];
 
-    public function listUsers(array $filters = [], array $columns = ['id', 'name', 'email', 'phone', 'username', 'role']): array
+    public function listUsers(array $filters = [], array $columns = ['id', 'name', 'email', 'phone', 'username', 'avatar', 'role']): array
     {
         $this->validateColumns($columns);
         [$where, $params] = $this->buildWhere($filters);
@@ -18,7 +18,7 @@ class UserModel extends BaseModel
         return $this->db->query($sql, $params)->fetchAll();
     }
 
-    public function findUser(array $filters, array $columns = ['id', 'name', 'email', 'phone', 'username', 'role']): ?array
+    public function findUser(array $filters, array $columns = ['id', 'name', 'email', 'phone', 'username', 'avatar', 'role']): ?array
     {
         $this->validateColumns($columns);
         [$where, $params] = $this->buildWhere($filters);
@@ -52,7 +52,7 @@ class UserModel extends BaseModel
 
     public function updateUser(int $id, array $data, ?string $role = null): void
     {
-        $allowed = ['name', 'email', 'phone', 'username', 'password'];
+        $allowed = ['name', 'email', 'phone', 'username', 'password', 'avatar'];
         $set = [];
         $params = ['id' => $id];
         foreach ($allowed as $field) {
