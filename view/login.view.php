@@ -4,7 +4,7 @@ use App\Core\View;
 
 $username = (string) (($form['username'] ?? ''));
 ?>
-<section class="stack">
+<section class="stack center">
     <div class="card" style="max-width: 520px;">
         <h1 class="title" style="font-size: 28px;">Sign in</h1>
         <p class="subtitle">Use your teacher or student account to access the class workspace.</p>

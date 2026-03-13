@@ -11,7 +11,7 @@ class FileService
         if ($preserveName) {
             $storedName = rawurlencode($originalName);
             if ($storedName === '' || $storedName === '.' || $storedName === '..') {
-                $storedName = 'sanitized_file_' . bin2hex(random_bytes(4));
+                throw new \RuntimeException('Invalid file name.');
             }
         } else {
             $extension = pathinfo($originalName, PATHINFO_EXTENSION);
