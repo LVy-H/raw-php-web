@@ -9,7 +9,7 @@ class FileService
         $originalName = (string) ($file['name'] ?? 'file');
         
         if ($preserveName) {
-            $storedName = rawurlencode($originalName);
+            $storedName = str_replace('.', '%2E', rawurldecode($originalName));
             if ($storedName === '' || $storedName === '.' || $storedName === '..') {
                 throw new \RuntimeException('Invalid file name.');
             }
@@ -59,7 +59,7 @@ class FileService
 
         header('Content-Description: File Transfer');
         header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . str_replace(['"', '\\'], '_', $safeName) . '"; filename*=UTF-8\'\'' . rawurlencode($safeName));
+        header('Content-Disposition: attachment; filename="' . str_replace(['"', '\\'], '_', $safeName) . '"; filename*=UTF-8\'\'' . str_replace('.', '%2E', rawurlencode($safeName)));
         header('Content-Length: ' . (string) filesize($path));
 
         readfile($path);

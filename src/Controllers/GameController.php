@@ -43,6 +43,11 @@ class GameController extends BaseController
             return $this->redirect('/games', null, 'Game file upload failed.');
         }
 
+        $extension = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+        if ($extension !== 'txt') {
+            return $this->redirect('/games', null, 'Only .txt files are allowed.');
+        }
+
         $gameId = bin2hex(random_bytes(8));
         $folder = $this->gamesRoot() . '/' . $gameId;
         if (!is_dir($folder)) {
@@ -84,7 +89,7 @@ class GameController extends BaseController
             return $this->redirect('/games', null, 'Reward file not found.');
         }
 
-        $guess = trim($_POST['guess'] ?? '');
+        $guess = str_replace('.', '%2E', rawurldecode(trim($_POST['guess'] ?? '')));
         $answer = $rewardFile['filename'];
         $correct = strcasecmp($guess, $answer) === 0;
 
@@ -99,7 +104,7 @@ class GameController extends BaseController
             'errorMessage' => null,
             'reward' => [
                 'game_id' => $id,
-                'answer' => $answer,
+                'answer' => rawurldecode($answer),
                 'content' => (string) file_get_contents($rewardFile['path']),
             ],
         ]);
@@ -169,7 +174,6 @@ class GameController extends BaseController
         if (!is_dir($folder)) {
             return null;
         }
-
         foreach (glob($folder . '/*') ?: [] as $path) {
             if (!is_file($path)) {
                 continue;
@@ -177,7 +181,7 @@ class GameController extends BaseController
 
             return [
                 'path' => $path,
-                'filename' => rawurldecode(basename($path)),
+                'filename' => str_replace('.', '%2E', rawurldecode(basename($path))),
             ];
         }
 

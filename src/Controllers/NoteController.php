@@ -39,6 +39,7 @@ class NoteController extends BaseController
             return $this->abort(404, 'Note not found.');
         }
 
+        $note['_type'] = 'note';
         $this->authorize($this->gate->allows('update', $note));
 
         $content = trim($_POST['content'] ?? '');
@@ -57,6 +58,7 @@ class NoteController extends BaseController
             return $this->abort(404, 'Note not found.');
         }
 
+        $note['_type'] = 'note';
         $this->authorize($this->gate->allows('delete', $note));
 
         $this->notes->deleteByIdAndWriter((int) $noteId, (int) ($_SESSION['user_id'] ?? 0));

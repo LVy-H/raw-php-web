@@ -9,7 +9,7 @@ $action = $isEdit
     ? '/users/' . View::escape((string) ($studentId ?? '')) . '/update'
     : '/users';
 ?>
-<section class="stack">
+<section class="stack center">
     <div class="card" style="max-width: 620px;">
         <h1 class="title" style="font-size: 28px;"><?= $isEdit ? ($isSelfEdit ? 'Edit My Account' : 'Edit Student') : 'Create Student' ?></h1>
         <p class="subtitle">
